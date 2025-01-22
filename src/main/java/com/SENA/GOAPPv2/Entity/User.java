@@ -3,6 +3,9 @@ package com.SENA.GOAPPv2.Entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 /**
  * Representa la entidad "User" que contiene los datos de autenticación y rol de un usuario.
  */
@@ -14,35 +17,32 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Nombre de usuario único para el inicio de sesión.
-     */
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    /**
-     * Contraseña del usuario (debería estar encriptada).
-     */
     @Column(nullable = false, length = 100)
     private String password;
 
-    /**
-     * Relación uno a uno con la entidad "Person".
-     * Representa los datos personales asociados al usuario.
-     */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "person_id", nullable = false, unique = true)
-    @JsonBackReference  // Evita la serialización en el lado de User
+    @JsonBackReference
     private Person person;
 
-    /**
-     * Tipo de rol del usuario (ADMINISTRADOR, AGENTE, TIENDA).
-     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RoleType role;
 
-    // === Constructores ===
+
+    @OneToOne
+    @JoinColumn(name = "code_id")
+    private Code code; // Usa directamente el objeto Code
+
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = false; // Estado activo/inactivo.
+
+    @Column(name = "start_time")
+    private LocalDateTime startTime; // Inicio de la jornada laboral.
 
     public User() {
     }
@@ -53,7 +53,6 @@ public class User {
         this.person = person;
         this.role = role;
     }
-
     // === Getters y Setters ===
 
     public Long getId() {
@@ -94,6 +93,31 @@ public class User {
 
     public void setRole(RoleType role) {
         this.role = role;
+    }
+
+    public Code getCode() {
+        return code;
+    }
+
+    public void setCode(Code code) {
+        this.code = code;
+    }
+
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
     }
 
     // === Métodos personalizados ===
