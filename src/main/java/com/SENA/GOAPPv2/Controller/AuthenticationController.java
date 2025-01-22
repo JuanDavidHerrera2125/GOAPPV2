@@ -10,34 +10,42 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
     @Autowired
-    private AuthenticationIService authenticationService;
+    private AuthenticationIService authenticationService; // Servicio para manejar la lógica de autenticación
 
     /**
      * Endpoint para autenticar a un usuario utilizando un código.
      *
-     * @param loginRequest Objeto con los datos de inicio de sesión.
-     * @return Respuesta HTTP indicando el resultado de la autenticación.
+     * @param loginRequest Objeto que contiene los datos de inicio de sesión enviados por el cliente.
+     * @return Respuesta HTTP indicando si la autenticación fue exitosa o no.
      */
     @PostMapping("/login")
     public ResponseEntity<String> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        // Obtener los datos de inicio de sesión del objeto LoginRequest
         Long userId = loginRequest.getUserId();
         String code = loginRequest.getCode();
 
         // Intenta autenticar al usuario
         boolean isAuthenticated = authenticationService.authenticate(userId, code);
 
+        // Retorna una respuesta HTTP basada en el resultado de la autenticación
         if (isAuthenticated) {
-            return ResponseEntity.ok("Usuario autenticado. Jornada iniciada.");
+            return ResponseEntity.ok("Usuario autenticado. Jornada iniciada."); // Respuesta 200 OK
         } else {
-            return ResponseEntity.badRequest().body("Autenticación fallida. Verifica el código o el usuario.");
+            return ResponseEntity.badRequest().body("Autenticación fallida. Verifica el código o el usuario."); // Respuesta 400 Bad Request
         }
     }
 
-    // Clase interna para manejar el cuerpo de la solicitud
+    /**
+     * Clase interna para manejar el cuerpo de la solicitud de inicio de sesión.
+     *
+     * Este objeto contiene los campos necesarios para que el cliente envíe los datos
+     * requeridos para la autenticación.
+     */
     public static class LoginRequest {
-        private Long userId;
-        private String code;
+        private Long userId; // ID del usuario que intenta autenticarse
+        private String code; // Código proporcionado por el usuario
 
+        // Getters y setters para userId
         public Long getUserId() {
             return userId;
         }
@@ -46,6 +54,7 @@ public class AuthenticationController {
             this.userId = userId;
         }
 
+        // Getters y setters para code
         public String getCode() {
             return code;
         }
