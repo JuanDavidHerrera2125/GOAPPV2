@@ -31,4 +31,10 @@ public interface AuthenticationIService {
      * @return Usuario si existe, vacío en caso contrario.
      */
     Optional<User> getUserById(Long userId);
+
+    void getElapsedTime( );
+
+    long getElapsedTime(Long userId);
+
+    void endSession(Long userId);
 }
