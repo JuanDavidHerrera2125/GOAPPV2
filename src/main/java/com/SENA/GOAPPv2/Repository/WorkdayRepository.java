@@ -6,9 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface WorkdayRepository extends JpaRepository<Workday, Long> {
+
+
+    Optional<Workday> findByUserIdAndEndTimeIsNull(Long userId);
 
     // Buscar jornadas por ID de usuario
     List<Workday> findByUserId(Long userId);

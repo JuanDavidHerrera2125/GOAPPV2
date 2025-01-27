@@ -27,7 +27,7 @@ public class Workday {
 
     private long hoursWorked; // Campo calculado: horas trabajadas en la jornada.
 
-    private long totalToPay; // Campo calculado: total a pagar en pesos.
+    private long totalPay; // Campo calculado: total a pagar en pesos.
 
     // Constructor vacío para que JPA pueda instanciar la entidad.
     public Workday() {
@@ -94,12 +94,12 @@ public class Workday {
         this.hoursWorked = hoursWorked; // Solo se usa si necesitas ajustar manualmente las horas trabajadas.
     }
 
-    public long getTotalToPay() {
-        return totalToPay;
+    public long getTotalPay() {
+        return totalPay;
     }
 
-    public void setTotalToPay(long totalToPay) {
-        this.totalToPay = totalToPay; // Solo se usa si necesitas ajustar manualmente el total a pagar.
+    public void setTotalPay(long totalPay) {
+        this.totalPay = totalPay; // Solo se usa si necesitas ajustar manualmente el total a pagar.
     }
 
     // Método para calcular horas trabajadas y el total a pagar.
@@ -109,10 +109,7 @@ public class Workday {
             this.hoursWorked = ChronoUnit.HOURS.between(startTime, endTime);
 
             // Calcula el total a pagar multiplicando las horas trabajadas por 9000 pesos.
-            this.totalToPay = this.hoursWorked * 9000;
+            this.totalPay = this.hoursWorked * 9000;
         }
-    }
-
-    public void setTotalPay(long totalPay) {
     }
 }

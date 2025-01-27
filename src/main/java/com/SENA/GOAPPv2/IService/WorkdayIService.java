@@ -20,5 +20,5 @@ public interface WorkdayIService {
 
     void createWorkday(User user, LocalDateTime endTime);
 
-    void save(Workday workday);
+    Workday save(Workday workday);
 }

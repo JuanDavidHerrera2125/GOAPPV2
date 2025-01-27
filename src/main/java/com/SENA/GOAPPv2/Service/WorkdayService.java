@@ -5,10 +5,10 @@ import com.SENA.GOAPPv2.Entity.Workday;
 import com.SENA.GOAPPv2.IService.WorkdayIService;
 import com.SENA.GOAPPv2.Repository.WorkdayRepository;
 import com.SENA.GOAPPv2.Repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -19,6 +19,7 @@ import static com.SENA.GOAPPv2.Service.AuthenticationService.HOURLY_RATE;
  * Servicio para manejar la lógica de negocio relacionada con las jornadas de trabajo.
  */
 @Service
+@Transactional
 public class WorkdayService implements WorkdayIService {
 
     @Autowired
@@ -36,16 +37,38 @@ public class WorkdayService implements WorkdayIService {
     @Override
     public void registerWorkday(Long userId, LocalDateTime startTime, LocalDateTime endTime) {
         Optional<User> userOptional = userRepository.findById(userId);
+
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            // Crear y guardar la jornada de trabajo
-            Workday workday = new Workday(user, startTime.toLocalDate(), startTime, endTime);
+
+            // Verifica si el usuario ya tiene una jornada activa
+            if (user.getStartTime() != null) {
+                System.out.println("El usuario ya tiene una jornada activa.");
+                return;
+            }
+
+            // Establecer la hora de inicio en el usuario
+            user.setStartTime(startTime);
+            user.setActive(true); // Marca al usuario como activo
+            userRepository.save(user);
+
+            // Crear la nueva jornada de trabajo
+            Workday workday = new Workday();
+            workday.setUser(user);
+            workday.setDate(startTime.toLocalDate());
+            workday.setStartTime(startTime);
+
+            // Guarda la jornada de trabajo en la base de datos
             workdayRepository.save(workday);
-            System.out.println("Jornada registrada exitosamente.");
+
+            System.out.println("Jornada iniciada exitosamente para el usuario: " + userId);
         } else {
             System.out.println("Usuario no encontrado.");
         }
     }
+
+
+
 
     /**
      * Obtiene una jornada de trabajo específica por su ID.
@@ -66,7 +89,7 @@ public class WorkdayService implements WorkdayIService {
     @Override
     public Iterable<Workday> getWorkdaysByUser(Long userId) {
         // Aquí deberías filtrar las jornadas por el usuario; esta implementación devuelve todas las jornadas.
-        return workdayRepository.findAll();
+        return workdayRepository.findByUserId(userId);
     }
 
     /**
@@ -91,32 +114,47 @@ public class WorkdayService implements WorkdayIService {
      */
     @Override
     public void createWorkday(User user, LocalDateTime endTime) {
-        // Calcula las horas trabajadas
-        long hoursWorked = ChronoUnit.HOURS.between(user.getStartTime(), endTime);
+        // Verifica que el usuario tenga una jornada activa
+        if (user.getStartTime() == null) {
+            System.out.println("El usuario no tiene una jornada activa.");
+            return;
+        }
 
-        // Calcula el total a pagar basado en una tarifa horaria definida
-        long totalPay = hoursWorked * HOURLY_RATE;
+        // Buscar la jornada activa del usuario
+        Optional<Workday> workdayOptional = workdayRepository
+                .findByUserIdAndEndTimeIsNull(user.getId()); // Método personalizado en el repositorio
 
-        // Crear la jornada de trabajo
-        Workday workday = new Workday();
-        workday.setUser(user);
-        workday.setDate(LocalDate.now());
-        workday.setStartTime(user.getStartTime());
-        workday.setEndTime(endTime);
-        workday.setHoursWorked(hoursWorked);
-        workday.setTotalPay(totalPay);
+        if (workdayOptional.isPresent()) {
+            Workday workday = workdayOptional.get();
 
-        // Guardar la jornada en la base de datos
-        workdayRepository.save(workday);
+            // Calcula las horas trabajadas
+            long hoursWorked = ChronoUnit.HOURS.between(workday.getStartTime(), endTime);
 
-        // Actualizar el estado del usuario para finalizar su jornada
-        user.setStartTime(null); // Elimina la hora de inicio del usuario
-        user.setActive(false); // Marca al usuario como inactivo
-        userRepository.save(user);
+            // Calcula el total a pagar
+            long totalPay = hoursWorked * HOURLY_RATE;
+
+            // Finaliza la jornada
+            workday.setEndTime(endTime);
+            workday.setHoursWorked(hoursWorked);
+            workday.setTotalPay(totalPay);
+
+            workdayRepository.save(workday);
+
+            // Actualizar el estado del usuario
+            user.setStartTime(null); // Limpia el tiempo de inicio del usuario
+            user.setActive(false); // Marca al usuario como inactivo
+            userRepository.save(user);
+
+            System.out.println("Jornada finalizada exitosamente.");
+        } else {
+            System.out.println("No se encontró una jornada activa para el usuario.");
+        }
     }
 
-    @Override
-    public void save(Workday workday) {
 
+
+    @Override
+    public Workday save(Workday workday) {
+        return workdayRepository.save(workday);
     }
 }
