@@ -100,4 +100,6 @@ public interface UserIService {
      * @return Lista de usuarios con el rol especificado.
      */
     List<User> findByRole(String role);
+
+    List<User> getActiveUsers();
 }

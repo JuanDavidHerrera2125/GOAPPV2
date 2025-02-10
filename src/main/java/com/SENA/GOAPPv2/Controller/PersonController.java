@@ -3,6 +3,7 @@ package com.SENA.GOAPPv2.Controller;
 import com.SENA.GOAPPv2.Entity.Person;
 import com.SENA.GOAPPv2.Service.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,13 +74,20 @@ public class PersonController {
      * @return Respuesta vacía con código 204 si se elimina correctamente, o un error 404 si no existe.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePerson(@PathVariable Long id) {
+    public ResponseEntity<String> deletePerson(@PathVariable Long id) {
         Optional<Person> existingPerson = personService.getPersonById(id);
+
         if (existingPerson.isPresent()) {
-            personService.deletePerson(id);
-            return ResponseEntity.noContent().build();
+            try {
+                personService.deletePerson(id);
+                return ResponseEntity.ok("Persona eliminada con éxito");
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Error al eliminar la persona: " + e.getMessage());
+            }
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Persona no encontrada con ID: " + id);
         }
     }
 }

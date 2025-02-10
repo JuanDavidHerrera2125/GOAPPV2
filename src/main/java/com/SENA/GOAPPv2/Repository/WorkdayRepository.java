@@ -17,11 +17,7 @@ public interface WorkdayRepository extends JpaRepository<Workday, Long> {
     // Buscar jornadas por ID de usuario
     List<Workday> findByUserId(Long userId);
 
-
-
-
-
-    //______________________________________
+      //______________________________________
 
     //Por implementar
 

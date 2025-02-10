@@ -12,7 +12,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/workday")
-public class WorkdayController {
+public class
+
+WorkdayController {
 
     @Autowired
     private WorkdayIService workdayService;

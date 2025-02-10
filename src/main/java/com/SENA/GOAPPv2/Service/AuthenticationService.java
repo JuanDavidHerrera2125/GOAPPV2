@@ -9,11 +9,13 @@ import com.SENA.GOAPPv2.Repository.CodeRepository;
 import com.SENA.GOAPPv2.Repository.UserRepository;
 import com.SENA.GOAPPv2.Repository.WorkdayRepository;  // Importa el repositorio de Workday
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -155,5 +157,25 @@ public class AuthenticationService implements AuthenticationIService {
 
     private String generateCodeForDay() {
         return "CODE-" + LocalDate.now().toString();
+    }
+
+    // Método programado que se ejecuta cada minuto para revisar las jornadas activas
+    @Scheduled(fixedRate = 60000) // Ejecutar cada 60 segundos
+    public void checkActiveSessions() {
+        // Obtener todos los usuarios activos
+        List<User> activeUsers = userRepository.findByIsActiveTrue();
+
+        for (User user : activeUsers) {
+            if (user.getStartTime() != null) {
+                // Calcula el tiempo transcurrido desde el inicio de la sesión
+                long hoursElapsed = ChronoUnit.HOURS.between(user.getStartTime(), LocalDateTime.now());
+
+                if (hoursElapsed >= MAX_SESSION_HOURS) {
+                    // Finaliza la sesión del usuario
+                    endSession(user.getId());
+                    System.out.println("Sesión finalizada automáticamente para el usuario con ID: " + user.getId());
+                }
+            }
+        }
     }
 }

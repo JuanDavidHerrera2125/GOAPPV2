@@ -76,5 +76,10 @@ public class UserService implements UserIService {
         return List.of();
     }
 
+    @Override
+    public List<User> getActiveUsers() {
+        return List.of();
+    }
+
 
 }

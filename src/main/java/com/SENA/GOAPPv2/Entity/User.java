@@ -1,6 +1,7 @@
 package com.SENA.GOAPPv2.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -23,10 +24,17 @@ public class User {
     @Column(nullable = false, length = 100)
     private String password;
 
+    @OneToOne
+    @JoinColumn(name = "person_id", foreignKey = @ForeignKey(name = "fk_user_person", foreignKeyDefinition = "FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE"))
+    @JsonManagedReference
+    private Person person;
+
+
+    /*
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "person_id", nullable = false, unique = true)
     @JsonBackReference
-    private Person person;
+    private Person person; */
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

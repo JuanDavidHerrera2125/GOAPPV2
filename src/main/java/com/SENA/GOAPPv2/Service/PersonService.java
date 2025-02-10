@@ -3,6 +3,8 @@ package com.SENA.GOAPPv2.Service;
 import com.SENA.GOAPPv2.Entity.Person;
 import com.SENA.GOAPPv2.IService.PersonIService;
 import com.SENA.GOAPPv2.Repository.PersonRepository;
+import com.SENA.GOAPPv2.Repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,9 @@ public class PersonService implements PersonIService {
 
     @Autowired
     private PersonRepository personRepository;
+
+    @Autowired
+    private UserRepository userRepository; // Asegúrate de tener esta línea
 
     @Override
     public List<Person> getAllPersons() {
@@ -82,8 +87,21 @@ public class PersonService implements PersonIService {
 
     @Override
     public void deleteById(Long id) {
-        personRepository.deleteById(id);
+        Optional<Person> personOptional = personRepository.findById(id);
+
+        if (personOptional.isPresent()) {
+            Person person = personOptional.get();
+
+            // Eliminar el usuario asociado antes de eliminar la persona
+            UserRepository.deleteByPerson(person);
+
+            // Ahora sí, eliminar la persona
+            personRepository.deleteById(id);
+        } else {
+            throw new EntityNotFoundException("Persona con ID " + id + " no encontrada");
+        }
     }
+
 
     @Override
     public List<Person> findPersonsByName(String name) {

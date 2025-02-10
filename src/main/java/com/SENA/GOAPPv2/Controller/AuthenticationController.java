@@ -41,7 +41,7 @@ public class AuthenticationController {
      * @param userId El ID del usuario autenticado.
      * @return El tiempo transcurrido en segundos.
      */
-    @GetMapping("/elapsed-time")
+    @GetMapping("/elapsed-time/{id}")
     public ResponseEntity<Long> getElapsedTime(@RequestParam Long userId) {
         long elapsedTime = authenticationService.getElapsedTime(userId);
         return ResponseEntity.ok(elapsedTime);
@@ -94,4 +94,11 @@ public class AuthenticationController {
             this.userId = userId;
         }
     }
+
+
+    @DeleteMapping("/deleteWorkday/{userId}")
+    public ResponseEntity<String> deleteWorkday(@PathVariable Long userId) {
+        return ResponseEntity.ok("Workday eliminado correctamente.");
+    }
+
 }

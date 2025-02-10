@@ -40,8 +40,8 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        Optional<User> userOptional = userService.findById(id);
-        return userOptional.map(ResponseEntity::ok)
+        return userService.findById(id)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -53,6 +53,9 @@ public class UserController {
      */
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
+        if (userService.findByUsername(user.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().build();
+        }
         User createdUser = userService.save(user);
         return ResponseEntity.status(201).body(createdUser);
     }
@@ -66,33 +69,27 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        Optional<User> userOptional = userService.findById(id);
-
-        if (userOptional.isPresent()) {
-            user.setId(id); // Se asegura de que el ID sea el correcto
-            User updatedUser = userService.save(user);
-            return ResponseEntity.ok(updatedUser);
-        } else {
+        if (!userService.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        user.setId(id); // Se asegura de que el ID sea el correcto
+        User updatedUser = userService.save(user);
+        return ResponseEntity.ok(updatedUser);
     }
 
     /**
      * Eliminar un usuario por su ID.
      *
      * @param id ID del usuario a eliminar.
-     * @return Mensaje indicando el resultado de la operación.
+     * @return Código de respuesta indicando el resultado.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        Optional<User> userOptional = userService.findById(id);
-
-        if (userOptional.isPresent()) {
-            userService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } else {
+        if (!userService.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        userService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     // === BÚSQUEDAS PERSONALIZADAS ===
@@ -105,8 +102,8 @@ public class UserController {
      */
     @GetMapping("/search/by-username/{username}")
     public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
-        Optional<User> userOptional = userService.findByUsername(username);
-        return userOptional.map(ResponseEntity::ok)
+        return userService.findByUsername(username)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -119,10 +116,17 @@ public class UserController {
     @GetMapping("/search/by-role/{role}")
     public ResponseEntity<List<User>> getUsersByRole(@PathVariable String role) {
         List<User> users = userService.findByRole(role);
-        if (users.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.ok(users);
-        }
+        return users.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(users);
+    }
+
+    /**
+     * Obtener usuarios con sesiones activas.
+     *
+     * @return Lista de usuarios con sesión activa.
+     */
+    @GetMapping("/active-sessions")
+    public ResponseEntity<List<User>> getActiveSessions() {
+        List<User> activeUsers = userService.getActiveUsers();
+        return ResponseEntity.ok(activeUsers);
     }
 }

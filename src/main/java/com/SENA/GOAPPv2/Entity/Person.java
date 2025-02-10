@@ -1,5 +1,6 @@
 package com.SENA.GOAPPv2.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.text.SimpleDateFormat;
@@ -36,7 +37,7 @@ public class Person {
     private Date birthDate;
 
     @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference  // Serializa la relación desde el lado de Person
+    @JsonBackReference  // Evita la serialización infinita
     private User user;
 
     // Constructors
@@ -155,4 +156,5 @@ public class Person {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");  // Formato deseado
         return formatter.format(birthDate);  // Convierte la fecha en String
     }
+
 }
