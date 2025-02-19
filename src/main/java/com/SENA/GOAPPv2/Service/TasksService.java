@@ -5,8 +5,8 @@ import com.SENA.GOAPPv2.Entity.User;
 import com.SENA.GOAPPv2.IService.TasksIService;
 import com.SENA.GOAPPv2.Repository.TasksRepository;
 import com.SENA.GOAPPv2.Repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,121 +14,114 @@ import java.util.List;
 @Service
 public class TasksService implements TasksIService {
 
-    @Autowired
-    private TasksRepository tasksRepository;
+    private final TasksRepository tasksRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    // Inyección de dependencias a través del constructor
+    public TasksService(TasksRepository tasksRepository, UserRepository userRepository) {
+        this.tasksRepository = tasksRepository;
+        this.userRepository = userRepository;
+    }
 
-    /**
-     * Método para asignar una tarea.
-     */
+    // Método para asignar una tarea individualmente
     @Override
     public Tasks assignTask(Tasks task) {
-        // Validar que el usuario que asigna la tarea es un ADMINISTRADOR
+        // Validar si el administrador tiene el rol correcto
         if (task.getAdministrador() == null || task.getAdministrador().getRole() != User.RoleType.ADMINISTRADOR) {
-            throw new IllegalArgumentException("Solo un administrador puede asignar tareas.");
+            throw new RuntimeException("Solo un administrador puede asignar tareas.");
         }
 
-        // Validar que el usuario asignado es un AGENTE
+        // Validar si el agente tiene el rol correcto
         if (task.getAgente() == null || task.getAgente().getRole() != User.RoleType.AGENTE) {
-            throw new IllegalArgumentException("El usuario asignado debe tener el rol AGENTE.");
+            throw new RuntimeException("El usuario asignado debe tener el rol AGENTE.");
         }
 
-        // Asignar la fecha actual
-        task.setAssignedAt(LocalDateTime.now());
-
-        // Guardar la tarea en la base de datos
+        task.setAssignedAt(LocalDateTime.now()); // Asignar la fecha actual de asignación
         return tasksRepository.save(task);
     }
 
-    /**
-     * Método para obtener todas las tareas.
-     */
+    // Método para obtener todas las tareas almacenadas en la base de datos
     @Override
     public List<Tasks> getAllTasks() {
         return tasksRepository.findAll();
     }
 
-    /**
-     * Método para asignar un agente a una tienda.
-     */
     @Override
     public Tasks assignAgentToStore(Tasks task, Long administradorId, Long agenteId, Long tiendaId) {
-        // Buscar al administrador en la base de datos
-        User administrador = userRepository.findById(administradorId)
-                .orElseThrow(() -> new RuntimeException("Administrador no encontrado."));
-
-        // Validar que el usuario es un ADMINISTRADOR
-        if (administrador.getRole() != User.RoleType.ADMINISTRADOR) {
-            throw new RuntimeException("Solo un administrador puede asignar un agente a una tienda.");
-        }
-
-        // Buscar al agente en la base de datos
-        User agente = userRepository.findById(agenteId)
-                .orElseThrow(() -> new RuntimeException("Agente no encontrado."));
-
-        // Validar que el usuario tenga el rol de AGENTE
-        if (agente.getRole() != User.RoleType.AGENTE) {
-            throw new RuntimeException("El usuario asignado no es un agente.");
-        }
-
-        // Buscar la tienda en la base de datos
-        User tienda = userRepository.findById(tiendaId)
-                .orElseThrow(() -> new RuntimeException("Tienda no encontrada."));
-
-        // Validar que el usuario tenga el rol de TIENDA
-        if (tienda.getRole() != User.RoleType.TIENDA) {
-            throw new RuntimeException("El usuario asignado no es una tienda válida.");
-        }
-
-        // Asignar los valores a la tarea
-        task.setAdministrador(administrador);
-        task.setAgente(agente);
-        task.setTienda(tienda);
-        task.setAssignedAt(LocalDateTime.now());
-
-        // Guardar la tarea en la base de datos
-        return tasksRepository.save(task);
+        return null;
     }
 
-    /**
-     * Método para crear y asignar una tarea a una tienda sin recibir un objeto Tasks.
-     */
     @Override
+    public Tasks asignarAgenteATienda(Tasks tarea, Long administradorId, Long agenteId, Long tiendaId) {
+        // Validar si el administrador existe
+        User administrador = userRepository.findById(administradorId)
+                .orElseThrow(() -> new RuntimeException("Administrador no encontrado con ID: " + administradorId));
+
+        // Validar si el agente existe
+        User agente = userRepository.findById(agenteId)
+                .orElseThrow(() -> new RuntimeException("Agente no encontrado con ID: " + agenteId));
+
+        // Validar si la tienda existe
+        User tienda = userRepository.findById(tiendaId)
+                .orElseThrow(() -> new RuntimeException("Tienda no encontrada con ID: " + tiendaId));
+
+        // Validar que el administrador tenga el role correcto
+        if (!administrador.getRole().equals(User.RoleType.ADMINISTRADOR)) {
+            throw new RuntimeException("El usuario con ID: " + administradorId + " no tiene el role de Administrador.");
+        }
+
+        // Validar que el agente tenga el role correcto
+        if (!agente.getRole().equals(User.RoleType.AGENTE)) {
+            throw new RuntimeException("El usuario con ID: " + agenteId + " no tiene el role de Agente.");
+        }
+
+        // Validar que la tienda tenga el role correcto
+        if (!tienda.getRole().equals(User.RoleType.TIENDA)) {
+            throw new RuntimeException("El usuario con ID: " + tiendaId + " no tiene el role de Tienda.");
+        }
+
+        // Asignar la tienda y el agente a la tarea
+        tarea.setAgente(agente);
+        tarea.setTienda(tienda);
+
+        // Guardar la tarea en el repositorio
+        return tasksRepository.save(tarea);
+    }
+
+
+
+    // Método para asignar un agente a una tienda
+    @Override
+    @Transactional
     public Tasks assignAgentToStore(Long administradorId, Long agenteId, Long tiendaId) {
-        // Buscar al administrador
+        // Buscar al administrador por ID y validar su rol
         User administrador = userRepository.findById(administradorId)
                 .orElseThrow(() -> new RuntimeException("Administrador no encontrado."));
 
-        // Validar que es un administrador
         if (administrador.getRole() != User.RoleType.ADMINISTRADOR) {
             throw new RuntimeException("Solo un administrador puede asignar un agente a una tienda.");
         }
 
-        // Buscar al agente
+        // Buscar al agente por ID y validar su rol
         User agente = userRepository.findById(agenteId)
                 .orElseThrow(() -> new RuntimeException("Agente no encontrado."));
 
-        // Validar que es un agente
         if (agente.getRole() != User.RoleType.AGENTE) {
             throw new RuntimeException("El usuario asignado no es un agente.");
         }
 
-        // Buscar la tienda
+        // Buscar a la tienda por ID y validar su rol
         User tienda = userRepository.findById(tiendaId)
                 .orElseThrow(() -> new RuntimeException("Tienda no encontrada."));
 
-        // Validar que es una tienda
         if (tienda.getRole() != User.RoleType.TIENDA) {
             throw new RuntimeException("El usuario asignado no es una tienda válida.");
         }
 
-        // Crear una nueva tarea
+        // Crear una nueva tarea con los usuarios encontrados
         Tasks task = new Tasks(administrador, agente, tienda);
-        task.setAssignedAt(LocalDateTime.now());
+        task.setAssignedAt(LocalDateTime.now());  // Asignar la fecha de creación de la tarea
 
-        // Guardar la tarea en la base de datos
-        return tasksRepository.save(task);
+        return tasksRepository.save(task);  // Guardar la tarea en la base de datos
     }
 }

@@ -9,5 +9,8 @@ public interface TasksIService {
 
     // Métodos para asignar un agente a una tienda
     Tasks assignAgentToStore(Tasks task, Long administradorId, Long agenteId, Long tiendaId);
+
+    Tasks asignarAgenteATienda(Tasks tarea, Long administradorId, Long agenteId, Long tiendaId);
+
     Tasks assignAgentToStore(Long administradorId, Long agenteId, Long tiendaId);
 }
